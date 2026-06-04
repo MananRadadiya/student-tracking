@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addStream, deleteStream } from '../../store/slices/usersSlice';
+import { createStreamAsync, deleteStreamAsync } from '../../store/slices/usersSlice';
 import { GlassCard, SectionHeader } from '../../components/dashboard/SharedUI';
 import { HiPlus, HiTrash, HiX } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -16,12 +16,16 @@ export default function AdminStreams() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', icon: '🌐', color: '#6366f1' });
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.name) { toast.error('Enter stream name'); return; }
-    dispatch(addStream({ id: 'str' + Date.now(), ...form }));
-    toast.success('Stream added!');
-    setShowModal(false);
-    setForm({ name: '', icon: '🌐', color: '#6366f1' });
+    try {
+      await dispatch(createStreamAsync(form)).unwrap();
+      toast.success('Stream added!');
+      setShowModal(false);
+      setForm({ name: '', icon: '🌐', color: '#6366f1' });
+    } catch (error) {
+      toast.error(error || 'Failed to add stream');
+    }
   };
 
   return (
@@ -52,7 +56,14 @@ export default function AdminStreams() {
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl" style={{ background: `${stream.color}15`, border: `1px solid ${stream.color}30` }}>
                   {stream.icon}
                 </div>
-                <button onClick={() => { dispatch(deleteStream(stream.id)); toast.success('Stream removed'); }} className="p-1.5 rounded-lg hover:bg-red-500/10 text-dark-500 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100">
+                <button onClick={async () => {
+                  try {
+                    await dispatch(deleteStreamAsync(stream.id)).unwrap();
+                    toast.success('Stream removed');
+                  } catch (e) {
+                    toast.error(e || 'Failed to remove stream');
+                  }
+                }} className="p-1.5 rounded-lg hover:bg-red-500/10 text-dark-500 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100">
                   <HiTrash className="w-4 h-4" />
                 </button>
               </div>

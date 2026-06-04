@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
-import { addTeachingLog } from '../../store/slices/submissionsSlice';
+import { createTeachingLogAsync } from '../../store/slices/submissionsSlice';
 import { GlassCard, SectionHeader } from '../../components/dashboard/SharedUI';
 import { HiUpload } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -13,17 +13,19 @@ export default function FacultyTeaching() {
   const dispatch = useDispatch();
   const [form, setForm] = useState({ topic: '', streamId: streams[0]?.id || '', notes: '' });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.topic) { toast.error('Enter topic'); return; }
-    dispatch(addTeachingLog({
-      id: 'tl' + Date.now(),
-      facultyId: user.id,
-      date: new Date().toISOString().split('T')[0],
-      ...form,
-    }));
-    toast.success('Teaching log uploaded!');
-    setForm({ topic: '', streamId: streams[0]?.id || '', notes: '' });
+    try {
+      await dispatch(createTeachingLogAsync({
+        ...form,
+        date: new Date().toISOString().split('T')[0],
+      })).unwrap();
+      toast.success('Teaching log uploaded!');
+      setForm({ topic: '', streamId: streams[0]?.id || '', notes: '' });
+    } catch (error) {
+      toast.error(error || 'Failed to upload teaching log');
+    }
   };
 
   return (

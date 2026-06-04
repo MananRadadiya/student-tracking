@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { HiUsers, HiDocumentText, HiAcademicCap, HiTrendingUp, HiClock, HiDownload } from 'react-icons/hi';
 import { StatsCard, GlassCard, SectionHeader, StatusBadge } from '../../components/dashboard/SharedUI';
 import { StatsSkeleton, ChartSkeleton, ListSkeleton, CardSkeleton } from '../../components/ui/Skeleton';
-import { weeklySubmissionData, streamDistributionData, monthlyTrendData, activityTimeline } from '../../data/mockData';
+import { fetchWeeklySubmissions, fetchStreamDistribution, fetchMonthlyTrend } from '../../store/slices/analyticsSlice';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import LiveActivityFeed from '../../components/dashboard/LiveActivityFeed';
 import ExportReportModal from '../../components/dashboard/ExportReportModal';
@@ -24,19 +24,24 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function AdminDashboard() {
   const { students, streams } = useSelector((s) => s.users);
   const { submissions } = useSelector((s) => s.submissions);
+  const { weeklySubmissionData, streamDistributionData, monthlyTrendData } = useSelector((s) => s.analytics);
+  const dispatch = useDispatch();
 
   const totalSubmissions = submissions.length;
   const approvedCount = submissions.filter((s) => s.status === 'approved').length;
   const todayCount = submissions.filter((s) => s.date === new Date().toISOString().split('T')[0]).length;
-  const missedStudents = students.filter((st) => !submissions.some((sub) => sub.studentId === st.id && sub.date === new Date().toISOString().split('T')[0]));
+  const missedStudents = students.filter((st) => !submissions.some((sub) => sub.student_id === st.id && sub.date === new Date().toISOString().split('T')[0]));
 
   const [loading, setLoading] = useState(true);
   const [showExport, setShowExport] = useState(false);
 
   useEffect(() => {
+    dispatch(fetchWeeklySubmissions());
+    dispatch(fetchStreamDistribution());
+    dispatch(fetchMonthlyTrend());
     const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [dispatch]);
 
   return (
     <div className="space-y-8">

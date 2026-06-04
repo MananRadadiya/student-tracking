@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addFaculty, updateFaculty, deleteFaculty } from '../../store/slices/usersSlice';
+import { createFacultyAsync, updateFacultyAsync, deleteFacultyAsync } from '../../store/slices/usersSlice';
 import { GlassCard, SectionHeader } from '../../components/dashboard/SharedUI';
 import { HiPlus, HiPencil, HiTrash, HiX, HiSearch, HiPhone, HiMail, HiAcademicCap, HiBadgeCheck } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -53,24 +53,32 @@ export default function AdminFaculty() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name || !form.email) { toast.error('Please fill all required fields'); return; }
-    if (editFac) {
-      dispatch(updateFaculty({ ...editFac, ...form }));
-      toast.success('Faculty updated!');
-    } else {
-      dispatch(addFaculty({
-        id: 'f' + Date.now(), userId: null, ...form,
-        joinDate: new Date().toISOString().split('T')[0],
-      }));
-      toast.success('Faculty added!');
+    try {
+      if (editFac) {
+        await dispatch(updateFacultyAsync({ id: editFac.id, ...form })).unwrap();
+        toast.success('Faculty updated!');
+      } else {
+        await dispatch(createFacultyAsync({
+          ...form,
+          joinDate: new Date().toISOString().split('T')[0],
+        })).unwrap();
+        toast.success('Faculty added!');
+      }
+      setShowModal(false);
+    } catch (error) {
+      toast.error(error || 'Operation failed');
     }
-    setShowModal(false);
   };
 
-  const handleDelete = (id, name) => {
-    dispatch(deleteFaculty(id));
-    toast.success(`${name} removed`);
+  const handleDelete = async (id, name) => {
+    try {
+      await dispatch(deleteFacultyAsync(id)).unwrap();
+      toast.success(`${name} removed`);
+    } catch (error) {
+      toast.error(error || 'Failed to remove faculty');
+    }
   };
 
   const toggleStream = (streamId) => {

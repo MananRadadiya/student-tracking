@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { mockLogin, clearError } from '../store/slices/authSlice';
+import { loginUser, clearError } from '../store/slices/authSlice';
 import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiLightningBolt, HiSparkles, HiChartBar, HiShieldCheck, HiLogin } from 'react-icons/hi';
 
 const features = [
@@ -27,14 +27,14 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(mockLogin(email, password));
+    dispatch(loginUser({ email, password }));
   };
 
   const quickLogin = (role) => {
     const emails = { admin: 'admin@edutrack.com', faculty: 'faculty@edutrack.com', student: 'student@edutrack.com' };
     setEmail(emails[role]);
     setPassword('123456');
-    dispatch(mockLogin(emails[role], '123456'));
+    dispatch(loginUser({ email: emails[role], password: '123456' }));
   };
 
   return (
@@ -263,9 +263,14 @@ export default function Login() {
                 ))}
               </div>
 
-              <p className="text-center text-[11px] text-dark-600 mt-4">
-                Demo: any role email with password <span className="text-dark-400 font-mono">123456</span>
-              </p>
+              <div className="text-center mt-5 space-y-2">
+                <p className="text-[11px] text-dark-600">
+                  Demo: any role email with password <span className="text-dark-400 font-mono">123456</span>
+                </p>
+                <p className="text-sm text-dark-400">
+                  Don't have an account? <Link to="/signup" className="text-primary-400 hover:text-primary-300 font-semibold ml-1">Sign up</Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>

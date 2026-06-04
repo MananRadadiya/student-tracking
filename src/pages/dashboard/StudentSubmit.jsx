@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addSubmission } from '../../store/slices/submissionsSlice';
+import { createSubmissionAsync } from '../../store/slices/submissionsSlice';
 import { GlassCard, SectionHeader } from '../../components/dashboard/SharedUI';
 import { HiUpload, HiCheckCircle, HiDocumentText, HiPhotograph, HiCode, HiX, HiCloudUpload } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -36,18 +36,21 @@ export default function StudentSubmit() {
   const [submitted, setSubmitted] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [files, setFiles] = useState([]);
+  const [actualFiles, setActualFiles] = useState([]); // Store actual File objects for upload
   const [form, setForm] = useState({ title: '', streamId: streams[0]?.id || '', learnedInClass: '', learnedAtHome: '' });
 
   const student = students.find((s) => s.userId === user?.id || s.id === user?.studentId);
 
   const handleFiles = (newFiles) => {
-    const fileList = Array.from(newFiles).map((f) => ({
+    const fileArray = Array.from(newFiles);
+    const fileList = fileArray.map((f) => ({
       id: Date.now() + Math.random(),
       name: f.name,
       size: f.size,
       type: getFileType(f.name),
     }));
     setFiles((prev) => [...prev, ...fileList]);
+    setActualFiles((prev) => [...prev, ...fileArray]);
   };
 
   const handleDrop = (e) => {
@@ -56,28 +59,41 @@ export default function StudentSubmit() {
     handleFiles(e.dataTransfer.files);
   };
 
-  const removeFile = (id) => setFiles((prev) => prev.filter((f) => f.id !== id));
+  const removeFile = (id) => {
+    const idx = files.findIndex((f) => f.id === id);
+    setFiles((prev) => prev.filter((f) => f.id !== id));
+    if (idx !== -1) {
+      setActualFiles((prev) => prev.filter((_, i) => i !== idx));
+    }
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.learnedInClass || !form.learnedAtHome) { toast.error('Please fill all fields'); return; }
-    dispatch(addSubmission({
-      id: 'sub' + Date.now(),
-      studentId: student?.id || 's1',
-      streamId: form.streamId,
-      title: form.title || 'Daily Submission',
-      date: new Date().toISOString().split('T')[0],
-      learnedInClass: form.learnedInClass,
-      learnedAtHome: form.learnedAtHome,
-      files: files.map((f) => ({ name: f.name, size: f.size, type: f.type })),
-      status: 'submitted',
-      createdAt: new Date().toISOString(),
-    }));
-    toast.success('Submission uploaded successfully! 🎉');
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setForm({ title: '', streamId: streams[0]?.id || '', learnedInClass: '', learnedAtHome: '' });
-    setFiles([]);
+
+    const formData = new FormData();
+    formData.append('studentId', student?.id || 's1');
+    formData.append('streamId', form.streamId);
+    formData.append('title', form.title || 'Daily Submission');
+    formData.append('learnedInClass', form.learnedInClass);
+    formData.append('learnedAtHome', form.learnedAtHome);
+
+    // Append actual file objects
+    actualFiles.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    try {
+      await dispatch(createSubmissionAsync(formData)).unwrap();
+      toast.success('Submission uploaded successfully! 🎉');
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000);
+      setForm({ title: '', streamId: streams[0]?.id || '', learnedInClass: '', learnedAtHome: '' });
+      setFiles([]);
+      setActualFiles([]);
+    } catch (error) {
+      toast.error(error || 'Failed to submit');
+    }
   };
 
   return (

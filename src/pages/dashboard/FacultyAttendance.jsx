@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { HiCheckCircle, HiXCircle, HiClock, HiUsers } from 'react-icons/hi';
 import { GlassCard, SectionHeader, StatsCard } from '../../components/dashboard/SharedUI';
 import { StatsSkeleton, ListSkeleton } from '../../components/ui/Skeleton';
-import { approveAttendance, rejectAttendance } from '../../store/slices/attendanceSlice';
+import { approveAttendanceAsync, rejectAttendanceAsync } from '../../store/slices/attendanceSlice';
 import toast from 'react-hot-toast';
 
 export default function FacultyAttendance() {
@@ -23,14 +23,22 @@ export default function FacultyAttendance() {
   const approvedToday = todayRequests.filter((r) => r.status === 'present');
   const rejectedToday = todayRequests.filter((r) => r.status === 'rejected');
 
-  const handleApprove = (requestId) => {
-    dispatch(approveAttendance({ requestId, facultyId: user.id }));
-    toast.success('Attendance approved!');
+  const handleApprove = async (requestId) => {
+    try {
+      await dispatch(approveAttendanceAsync(requestId)).unwrap();
+      toast.success('Attendance approved!');
+    } catch (error) {
+      toast.error(error || 'Failed to approve attendance');
+    }
   };
 
-  const handleReject = (requestId) => {
-    dispatch(rejectAttendance({ requestId }));
-    toast.error('Attendance rejected');
+  const handleReject = async (requestId) => {
+    try {
+      await dispatch(rejectAttendanceAsync(requestId)).unwrap();
+      toast.error('Attendance rejected');
+    } catch (error) {
+      toast.error(error || 'Failed to reject attendance');
+    }
   };
 
   return (

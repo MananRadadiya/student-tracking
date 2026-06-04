@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiBell, HiCheckCircle, HiChatAlt2, HiFire, HiExclamation, HiLightningBolt } from 'react-icons/hi';
-import { mockNotifications } from '../../data/mockData';
+import { fetchNotifications, markAllNotificationsRead } from '../../store/slices/notificationSlice';
 
 const TYPE_ICONS = {
   feedback: { icon: <HiChatAlt2 className="w-4 h-4" />, color: 'text-blue-400 bg-blue-500/10' },
@@ -13,12 +14,17 @@ const TYPE_ICONS = {
 
 export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const dispatch = useDispatch();
+  const { notifications } = useSelector((s) => s.notifications);
+
+  useEffect(() => {
+    dispatch(fetchNotifications());
+  }, [dispatch]);
 
   const unread = notifications.filter((n) => !n.read).length;
 
   const markAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
+    dispatch(markAllNotificationsRead());
   };
 
   return (

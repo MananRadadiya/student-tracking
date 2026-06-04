@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { HiLocationMarker, HiPhone, HiMail, HiClock } from 'react-icons/hi';
+import { contactService } from '../services/contactService';
 
 const contactInfo = [
   { icon: HiLocationMarker, label: 'Visit Us', value: 'CDMI, Satellite Road, Ahmedabad, Gujarat 380015', color: 'from-blue-500 to-cyan-500' },
@@ -13,11 +14,16 @@ export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', course: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormData({ name: '', email: '', phone: '', course: '', message: '' });
+    try {
+      await contactService.submitContactForm(formData);
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000);
+      setFormData({ name: '', email: '', phone: '', course: '', message: '' });
+    } catch (error) {
+      console.error('Contact form error:', error);
+    }
   };
 
   return (

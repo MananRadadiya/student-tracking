@@ -1,7 +1,8 @@
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard, SectionHeader } from '../../components/dashboard/SharedUI';
-import { weeklySubmissionData, streamDistributionData, monthlyTrendData } from '../../data/mockData';
+import { fetchMonthlyTrend } from '../../store/slices/analyticsSlice';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -19,11 +20,17 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function AdminAnalytics() {
   const { students, streams } = useSelector((s) => s.users);
   const { submissions } = useSelector((s) => s.submissions);
+  const { monthlyTrendData } = useSelector((s) => s.analytics);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchMonthlyTrend());
+  }, [dispatch]);
 
   const streamStats = streams.map((stream) => ({
     name: stream.name,
-    students: students.filter((s) => s.streamId === stream.id).length,
-    submissions: submissions.filter((s) => s.streamId === stream.id).length,
+    students: students.filter((s) => (s.stream_id || s.streamId) === stream.id).length,
+    submissions: submissions.filter((s) => (s.stream_id || s.streamId) === stream.id).length,
     color: stream.color,
   }));
 

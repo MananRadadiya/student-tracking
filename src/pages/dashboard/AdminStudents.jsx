@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addStudent, updateStudent, deleteStudent } from '../../store/slices/usersSlice';
+import { createStudentAsync, updateStudentAsync, deleteStudentAsync } from '../../store/slices/usersSlice';
 import { GlassCard, SectionHeader } from '../../components/dashboard/SharedUI';
 import { HiPlus, HiPencil, HiTrash, HiX, HiSearch } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -17,28 +17,36 @@ export default function AdminStudents() {
 
   const filtered = students.filter((s) => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase());
-    const matchStream = streamFilter === 'all' || s.streamId === streamFilter;
+    const matchStream = streamFilter === 'all' || s.stream_id === streamFilter || s.streamId === streamFilter;
     return matchSearch && matchStream;
   });
 
   const openAdd = () => { setEditStudent(null); setForm({ name: '', email: '', streamId: streams[0]?.id || '' }); setShowModal(true); };
-  const openEdit = (s) => { setEditStudent(s); setForm({ name: s.name, email: s.email, streamId: s.streamId }); setShowModal(true); };
+  const openEdit = (s) => { setEditStudent(s); setForm({ name: s.name, email: s.email, streamId: s.stream_id || s.streamId }); setShowModal(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name || !form.email) { toast.error('Please fill all fields'); return; }
-    if (editStudent) {
-      dispatch(updateStudent({ ...editStudent, ...form }));
-      toast.success('Student updated!');
-    } else {
-      dispatch(addStudent({ id: 's' + Date.now(), userId: null, ...form, enrollmentDate: new Date().toISOString().split('T')[0], streak: 0, totalSubmissions: 0 }));
-      toast.success('Student added!');
+    try {
+      if (editStudent) {
+        await dispatch(updateStudentAsync({ id: editStudent.id, ...form })).unwrap();
+        toast.success('Student updated!');
+      } else {
+        await dispatch(createStudentAsync({ ...form, enrollmentDate: new Date().toISOString().split('T')[0] })).unwrap();
+        toast.success('Student added!');
+      }
+      setShowModal(false);
+    } catch (error) {
+      toast.error(error || 'Operation failed');
     }
-    setShowModal(false);
   };
 
-  const handleDelete = (id, name) => {
-    dispatch(deleteStudent(id));
-    toast.success(`${name} removed`);
+  const handleDelete = async (id, name) => {
+    try {
+      await dispatch(deleteStudentAsync(id)).unwrap();
+      toast.success(`${name} removed`);
+    } catch (error) {
+      toast.error(error || 'Delete failed');
+    }
   };
 
   return (

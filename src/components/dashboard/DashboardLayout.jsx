@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import NotificationCenter from './NotificationCenter';
 import GlobalSearch from './GlobalSearch';
 import { Toaster } from 'react-hot-toast';
 import { HiLightningBolt } from 'react-icons/hi';
+import { fetchStudents, fetchStreams, fetchFaculty } from '../../store/slices/usersSlice';
+import { fetchSubmissions, fetchFeedback, fetchTeachingLogs } from '../../store/slices/submissionsSlice';
+import { fetchAttendance } from '../../store/slices/attendanceSlice';
 
 const PageLoader = () => (
   <motion.div
@@ -44,6 +48,21 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const location = useLocation();
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((s) => s.auth);
+
+  // Fetch all data when dashboard mounts
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchStudents());
+      dispatch(fetchStreams());
+      dispatch(fetchFaculty());
+      dispatch(fetchSubmissions());
+      dispatch(fetchFeedback());
+      dispatch(fetchTeachingLogs());
+      dispatch(fetchAttendance());
+    }
+  }, [dispatch, isAuthenticated]);
 
   // Trigger loader on route change inside dashboard
   useEffect(() => {

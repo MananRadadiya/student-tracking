@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { HiDocumentText, HiUsers, HiCheckCircle, HiClock, HiDownload, HiDocumentDuplicate, HiPhotograph, HiCode } from 'react-icons/hi';
 import { StatsCard, GlassCard, SectionHeader, StatusBadge } from '../../components/dashboard/SharedUI';
 import { StatsSkeleton, ListSkeleton } from '../../components/ui/Skeleton';
-import { updateSubmissionStatus, addFeedback, setFilter } from '../../store/slices/submissionsSlice';
+import { updateSubmissionStatusAsync, addFeedbackAsync, setFilter } from '../../store/slices/submissionsSlice';
 import toast from 'react-hot-toast';
 
 const FILE_ICONS = {
@@ -47,17 +47,25 @@ export default function FacultyDashboard() {
   const approvedCount = submissions.filter((s) => s.status === 'approved').length;
   const pendingCount = submissions.filter((s) => s.status === 'submitted').length;
 
-  const handleStatusUpdate = (id, status) => {
-    dispatch(updateSubmissionStatus({ id, status }));
-    toast.success(`Status updated to ${status.replace('_', ' ')}`);
+  const handleStatusUpdate = async (id, status) => {
+    try {
+      await dispatch(updateSubmissionStatusAsync({ id, status })).unwrap();
+      toast.success(`Status updated to ${status.replace('_', ' ')}`);
+    } catch (error) {
+      toast.error(error || 'Failed to update status');
+    }
   };
 
-  const handleFeedback = (submissionId) => {
+  const handleFeedback = async (submissionId) => {
     const text = feedbackText[submissionId];
     if (!text?.trim()) { toast.error('Enter feedback'); return; }
-    dispatch(addFeedback({ id: 'f' + Date.now(), submissionId, facultyId: user.id, comment: text, rating: 4, createdAt: new Date().toISOString() }));
-    setFeedbackText({ ...feedbackText, [submissionId]: '' });
-    toast.success('Feedback added!');
+    try {
+      await dispatch(addFeedbackAsync({ submissionId, comment: text, rating: 4 })).unwrap();
+      setFeedbackText({ ...feedbackText, [submissionId]: '' });
+      toast.success('Feedback added!');
+    } catch (error) {
+      toast.error(error || 'Failed to add feedback');
+    }
   };
 
   const handleDownload = (fileName) => {

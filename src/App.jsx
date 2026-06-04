@@ -13,6 +13,7 @@ import Gallery from './pages/Gallery';
 import Blog from './pages/Blog';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
@@ -42,11 +43,11 @@ function ScrollToTop() {
 
 function PublicLayout() {
   const { pathname } = useLocation();
-  const isLoginPage = pathname === '/login';
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   return (
     <>
-      {!isLoginPage && <Navbar />}
+      {!isAuthPage && <Navbar />}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -58,9 +59,10 @@ function PublicLayout() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
         </Routes>
       </main>
-      {!isLoginPage && <Footer />}
+      {!isAuthPage && <Footer />}
     </>
   );
 }

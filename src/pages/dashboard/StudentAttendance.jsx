@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { HiCheckCircle, HiClock, HiLocationMarker } from 'react-icons/hi';
 import { GlassCard, SectionHeader } from '../../components/dashboard/SharedUI';
 import { CardSkeleton, ListSkeleton } from '../../components/ui/Skeleton';
-import { markAttendance } from '../../store/slices/attendanceSlice';
+import { markAttendanceAsync } from '../../store/slices/attendanceSlice';
 import toast from 'react-hot-toast';
 
 export default function StudentAttendance() {
@@ -29,9 +29,13 @@ export default function StudentAttendance() {
   const totalDays = myRecords.length || 1;
   const attendancePercentage = Math.round((presentDays / totalDays) * 100);
 
-  const handleMarkAttendance = () => {
-    dispatch(markAttendance({ studentId, date: today }));
-    toast.success('Attendance marked! Waiting for faculty approval.');
+  const handleMarkAttendance = async () => {
+    try {
+      await dispatch(markAttendanceAsync(studentId)).unwrap();
+      toast.success('Attendance marked! Waiting for faculty approval.');
+    } catch (error) {
+      toast.error(error || 'Failed to mark attendance');
+    }
   };
 
   return (
